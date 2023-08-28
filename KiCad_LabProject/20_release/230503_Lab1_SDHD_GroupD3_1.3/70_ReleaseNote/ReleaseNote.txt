@@ -1,0 +1,37 @@
+17.04.2023, GROUP D3
+Project: Movement Detector based on IPM-165 Radar Module
+---------------------------------------------------------------
+
+v1.0: 17.04.2023
+###############################################################
+Features:
+		1. Schematic of 4th order Bandpass filter.
+		2. Includes all the necessary calculations.
+		3. Footprint Assignments to all the components.
+		 
+v1.1: 19.04.2023
+###############################################################
+Features:
+		1. Schematic of 4th order Bandpass filter modified due 
+			to mil errors in the previous schematic.
+		2. Added Star ground connection, SW Push button and 
+			90° 3 Pin connector.
+		3. Necessary footprints assigned to all the components.
+		
+v1.2: 26.04.2023
+###############################################################
+Features:
+		1. Schematic of 4th order Bandpass filter modified as 
+			per the feedback from first lab.
+		2. Removed all ground differentiations like analog, 
+			digital grounds and made only one commmon ground for all circuits.
+		3. Removed star ground connection.
+		4. Assigned correct footprints to all components as per the datasheets.
+		5. Added +5v at all points.
+		
+v1.3 03.05.2023
+###############################################################
+Features:
+		1. Few updates on the footprints.
+		2. Placed all the components on PCB layout and routed all the components.
+		3. Layer 1 and 4 are common ground.
