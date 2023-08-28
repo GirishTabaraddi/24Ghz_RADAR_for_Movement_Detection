@@ -1,0 +1,1776 @@
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 1
+
+
+   1              		.syntax unified
+   2              		.cpu cortex-m3
+   3              		.fpu softvfp
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.thumb
+  14              		.syntax unified
+  15              		.file	"main.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.section	.text.isr_button_RisingEdge_Interrupt,"ax",%progbits
+  20              		.align	2
+  21              		.global	isr_button_RisingEdge_Interrupt
+  22              		.thumb
+  23              		.thumb_func
+  24              		.type	isr_button_RisingEdge_Interrupt, %function
+  25              	isr_button_RisingEdge_Interrupt:
+  26              	.LFB65:
+  27              		.file 1 "source\\asw\\main.c"
+   1:source\asw/main.c **** /* ========================================
+   2:source\asw/main.c ****  *
+   3:source\asw/main.c ****  * Copyright YOUR COMPANY, THE YEAR
+   4:source\asw/main.c ****  * All Rights Reserved
+   5:source\asw/main.c ****  * UNPUBLISHED, LICENSED SOFTWARE.
+   6:source\asw/main.c ****  *
+   7:source\asw/main.c ****  * CONFIDENTIAL AND PROPRIETARY INFORMATION
+   8:source\asw/main.c ****  * WHICH IS THE PROPERTY OF your company.
+   9:source\asw/main.c ****  *
+  10:source\asw/main.c ****  * ========================================
+  11:source\asw/main.c **** */
+  12:source\asw/main.c **** #include <stdio.h>
+  13:source\asw/main.c **** #include <stdlib.h>
+  14:source\asw/main.c **** #include "project.h"
+  15:source\asw/main.c **** #include "logging.h"
+  16:source\asw/main.c **** 
+  17:source\asw/main.c **** volatile uint8 toggle = 0;
+  18:source\asw/main.c **** 
+  19:source\asw/main.c **** CY_ISR_PROTO(isr_button_RisingEdge_Interrupt);
+  20:source\asw/main.c **** 
+  21:source\asw/main.c **** CY_ISR_PROTO(isr_UART);
+  22:source\asw/main.c **** 
+  23:source\asw/main.c **** typedef enum
+  24:source\asw/main.c **** {
+  25:source\asw/main.c ****     IDLE_STATE,
+  26:source\asw/main.c ****     SAMPLING_STATE,
+  27:source\asw/main.c ****     UART_TRANSFER_STATE
+  28:source\asw/main.c **** 
+  29:source\asw/main.c **** }STATE_t;
+  30:source\asw/main.c **** 
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 2
+
+
+  31:source\asw/main.c **** uint8_t sChRx = 0;
+  32:source\asw/main.c **** uint8_t oChRx = 0;
+  33:source\asw/main.c **** char rxDataCh;
+  34:source\asw/main.c **** 
+  35:source\asw/main.c **** int main(void)
+  36:source\asw/main.c **** {
+  37:source\asw/main.c ****     CyGlobalIntEnable; /* Enable global interrupts. */
+  38:source\asw/main.c ****     
+  39:source\asw/main.c ****     isr_button_StartEx(isr_button_RisingEdge_Interrupt);
+  40:source\asw/main.c ****     isr_UART_StartEx(isr_UART);
+  41:source\asw/main.c ****     
+  42:source\asw/main.c ****     //Hardware Init
+  43:source\asw/main.c ****     UART_LOG_Start();
+  44:source\asw/main.c ****     WaveDAC8_Start();
+  45:source\asw/main.c ****     //WaveDAC8_Enable();
+  46:source\asw/main.c ****     ADC_Start();
+  47:source\asw/main.c ****     ADC_StartConvert();
+  48:source\asw/main.c ****     
+  49:source\asw/main.c ****     //char buffer[100];
+  50:source\asw/main.c ****     
+  51:source\asw/main.c ****     uint8_t count = 0;
+  52:source\asw/main.c ****     uint16_t ADC_Array[1024] = {0};
+  53:source\asw/main.c ****     
+  54:source\asw/main.c ****     /* Place your initialization/startup code here (e.g. MyInst_Start()) */
+  55:source\asw/main.c ****     
+  56:source\asw/main.c ****     //Initializing the state to IDLE_STATE.
+  57:source\asw/main.c ****     STATE_t POS = IDLE_STATE;
+  58:source\asw/main.c ****  
+  59:source\asw/main.c ****     for(; ;)
+  60:source\asw/main.c ****     {
+  61:source\asw/main.c ****         switch(POS)
+  62:source\asw/main.c ****         {
+  63:source\asw/main.c ****             case IDLE_STATE:
+  64:source\asw/main.c ****                 //Initializing count to 0;
+  65:source\asw/main.c ****                 count = 0;
+  66:source\asw/main.c ****                 if(toggle == 1)
+  67:source\asw/main.c ****                 {
+  68:source\asw/main.c ****                     POS = SAMPLING_STATE;
+  69:source\asw/main.c ****                     toggle = 0;
+  70:source\asw/main.c ****                 }
+  71:source\asw/main.c ****             break;
+  72:source\asw/main.c ****             
+  73:source\asw/main.c ****             case SAMPLING_STATE:
+  74:source\asw/main.c ****                 for(int i = 0; i < 1024; i++)
+  75:source\asw/main.c ****                 {
+  76:source\asw/main.c ****                     ADC_IsEndConversion(ADC_WAIT_FOR_RESULT);
+  77:source\asw/main.c ****                     
+  78:source\asw/main.c ****                  //   int32 ADC_result = ADC_GetResult32();
+  79:source\asw/main.c ****         //            ADC_Array[i] = (uint16_t)ADC_CountsTo_mVolts(ADC_result);
+  80:source\asw/main.c ****                     ADC_Array[i] = (uint16_t)ADC_GetResult32();
+  81:source\asw/main.c **** //                    itoa(ADC_result_mV, buffer, 10);
+  82:source\asw/main.c **** //                    UART_LOG_PutString(buffer);
+  83:source\asw/main.c **** //                    UART_LOG_PutString("\n");
+  84:source\asw/main.c ****                 }
+  85:source\asw/main.c ****                 
+  86:source\asw/main.c **** //                if(UART_LOG_GetChar() == 's')
+  87:source\asw/main.c **** //                {
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 3
+
+
+  88:source\asw/main.c **** //                    Red_LED_Write(1);
+  89:source\asw/main.c **** //                    POS = UART_TRANSFER_STATE;
+  90:source\asw/main.c **** //                }
+  91:source\asw/main.c ****                          
+  92:source\asw/main.c ****                 if(sChRx)
+  93:source\asw/main.c ****                 {
+  94:source\asw/main.c ****                  //   UART_LOG_PutString("I received S \n");
+  95:source\asw/main.c ****                     Red_LED_Write(1);
+  96:source\asw/main.c ****                     POS = UART_TRANSFER_STATE;
+  97:source\asw/main.c ****                     sChRx = 0;
+  98:source\asw/main.c ****                 }
+  99:source\asw/main.c ****             break;
+ 100:source\asw/main.c ****             
+ 101:source\asw/main.c ****             case UART_TRANSFER_STATE:
+ 102:source\asw/main.c ****                 for(int i = 0; i < 1024; i++)
+ 103:source\asw/main.c ****                 {
+ 104:source\asw/main.c ****                     UART_LOG_PutChar(ADC_Array[i]);
+ 105:source\asw/main.c ****                     UART_LOG_PutChar(ADC_Array[i]>>8);
+ 106:source\asw/main.c ****                 }
+ 107:source\asw/main.c ****                 count++;
+ 108:source\asw/main.c ****                 
+ 109:source\asw/main.c **** //                if((count < 10) && UART_LOG_GetChar() == 'o')
+ 110:source\asw/main.c **** //                {
+ 111:source\asw/main.c **** //                    POS = SAMPLING_STATE;
+ 112:source\asw/main.c **** //                    Red_LED_Write(0);
+ 113:source\asw/main.c **** //                }
+ 114:source\asw/main.c **** //                else if((count == 10) && UART_LOG_GetChar() == 'o')
+ 115:source\asw/main.c **** //                {
+ 116:source\asw/main.c **** //                    POS = IDLE_STATE;  
+ 117:source\asw/main.c **** //                }
+ 118:source\asw/main.c ****                 
+ 119:source\asw/main.c ****                 if((count < 10) && oChRx)
+ 120:source\asw/main.c ****                 {
+ 121:source\asw/main.c ****                     POS = SAMPLING_STATE;
+ 122:source\asw/main.c ****                     Red_LED_Write(0);
+ 123:source\asw/main.c ****                     oChRx = 0;
+ 124:source\asw/main.c ****                 }
+ 125:source\asw/main.c ****                 else if((count == 10) && oChRx)
+ 126:source\asw/main.c ****                 {
+ 127:source\asw/main.c ****                     POS = IDLE_STATE;  
+ 128:source\asw/main.c ****                     oChRx = 0;
+ 129:source\asw/main.c ****                 }
+ 130:source\asw/main.c ****             break;
+ 131:source\asw/main.c ****             
+ 132:source\asw/main.c ****             default:
+ 133:source\asw/main.c ****             break;
+ 134:source\asw/main.c ****         }
+ 135:source\asw/main.c ****     }
+ 136:source\asw/main.c **** }
+ 137:source\asw/main.c ****     
+ 138:source\asw/main.c **** /**
+ 139:source\asw/main.c **** *This interrupt service routine will be called whenever a Button 1 rising edge interrupt occurs.
+ 140:source\asw/main.c **** **/
+ 141:source\asw/main.c **** CY_ISR(isr_button_RisingEdge_Interrupt)
+ 142:source\asw/main.c **** {
+  28              		.loc 1 142 0
+  29              		.cfi_startproc
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 4
+
+
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32 0000 08B5     		push	{r3, lr}
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+  35              		.cfi_offset 14, -4
+ 143:source\asw/main.c ****     Push_button_ClearInterrupt();
+  36              		.loc 1 143 0
+  37 0002 FFF7FEFF 		bl	Push_button_ClearInterrupt
+  38              	.LVL0:
+ 144:source\asw/main.c ****     
+ 145:source\asw/main.c ****     if(toggle == 0)
+  39              		.loc 1 145 0
+  40 0006 044B     		ldr	r3, .L4
+  41 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+  42 000a 13F0FF0F 		tst	r3, #255
+  43 000e 02D1     		bne	.L1
+ 146:source\asw/main.c ****     {
+ 147:source\asw/main.c ****         toggle = 1;
+  44              		.loc 1 147 0
+  45 0010 0122     		movs	r2, #1
+  46 0012 014B     		ldr	r3, .L4
+  47 0014 1A70     		strb	r2, [r3]
+  48              	.L1:
+  49 0016 08BD     		pop	{r3, pc}
+  50              	.L5:
+  51              		.align	2
+  52              	.L4:
+  53 0018 00000000 		.word	.LANCHOR0
+  54              		.cfi_endproc
+  55              	.LFE65:
+  56              		.size	isr_button_RisingEdge_Interrupt, .-isr_button_RisingEdge_Interrupt
+  57              		.section	.text.isr_UART,"ax",%progbits
+  58              		.align	2
+  59              		.global	isr_UART
+  60              		.thumb
+  61              		.thumb_func
+  62              		.type	isr_UART, %function
+  63              	isr_UART:
+  64              	.LFB66:
+ 148:source\asw/main.c ****     }
+ 149:source\asw/main.c **** }
+ 150:source\asw/main.c **** 
+ 151:source\asw/main.c **** CY_ISR(isr_UART)
+ 152:source\asw/main.c **** {
+  65              		.loc 1 152 0
+  66              		.cfi_startproc
+  67              		@ args = 0, pretend = 0, frame = 0
+  68              		@ frame_needed = 0, uses_anonymous_args = 0
+  69 0000 08B5     		push	{r3, lr}
+  70              		.cfi_def_cfa_offset 8
+  71              		.cfi_offset 3, -8
+  72              		.cfi_offset 14, -4
+ 153:source\asw/main.c ****     rxDataCh = UART_LOG_GetChar();
+  73              		.loc 1 153 0
+  74 0002 FFF7FEFF 		bl	UART_LOG_GetChar
+  75              	.LVL1:
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 5
+
+
+  76 0006 064B     		ldr	r3, .L10
+  77 0008 1870     		strb	r0, [r3]
+ 154:source\asw/main.c ****     if(rxDataCh == 's')
+  78              		.loc 1 154 0
+  79 000a 7328     		cmp	r0, #115
+  80 000c 02D1     		bne	.L7
+ 155:source\asw/main.c ****     {
+ 156:source\asw/main.c ****        // UART_LOG_PutString("S is sent \n");
+ 157:source\asw/main.c ****         sChRx = 1;
+  81              		.loc 1 157 0
+  82 000e 0122     		movs	r2, #1
+  83 0010 044B     		ldr	r3, .L10+4
+  84 0012 5A70     		strb	r2, [r3, #1]
+  85              	.L7:
+ 158:source\asw/main.c ****     }
+ 159:source\asw/main.c ****     if(rxDataCh == 'o')
+  86              		.loc 1 159 0
+  87 0014 6F28     		cmp	r0, #111
+  88 0016 02D1     		bne	.L6
+ 160:source\asw/main.c ****     {
+ 161:source\asw/main.c ****         oChRx = 1;
+  89              		.loc 1 161 0
+  90 0018 0122     		movs	r2, #1
+  91 001a 024B     		ldr	r3, .L10+4
+  92 001c 9A70     		strb	r2, [r3, #2]
+  93              	.L6:
+  94 001e 08BD     		pop	{r3, pc}
+  95              	.L11:
+  96              		.align	2
+  97              	.L10:
+  98 0020 00000000 		.word	rxDataCh
+  99 0024 00000000 		.word	.LANCHOR0
+ 100              		.cfi_endproc
+ 101              	.LFE66:
+ 102              		.size	isr_UART, .-isr_UART
+ 103              		.section	.text.main,"ax",%progbits
+ 104              		.align	2
+ 105              		.global	main
+ 106              		.thumb
+ 107              		.thumb_func
+ 108              		.type	main, %function
+ 109              	main:
+ 110              	.LFB64:
+  36:source\asw/main.c ****     CyGlobalIntEnable; /* Enable global interrupts. */
+ 111              		.loc 1 36 0
+ 112              		.cfi_startproc
+ 113              		@ args = 0, pretend = 0, frame = 2048
+ 114              		@ frame_needed = 0, uses_anonymous_args = 0
+ 115 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 116              		.cfi_def_cfa_offset 20
+ 117              		.cfi_offset 4, -20
+ 118              		.cfi_offset 5, -16
+ 119              		.cfi_offset 6, -12
+ 120              		.cfi_offset 7, -8
+ 121              		.cfi_offset 14, -4
+ 122 0002 ADF6040D 		subw	sp, sp, #2052
+ 123              		.cfi_def_cfa_offset 2072
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 6
+
+
+  37:source\asw/main.c ****     
+ 124              		.loc 1 37 0
+ 125              		.syntax unified
+ 126              	@ 37 "source\asw\main.c" 1
+ 127 0006 62B6     		CPSIE   i
+ 128              	@ 0 "" 2
+  39:source\asw/main.c ****     isr_UART_StartEx(isr_UART);
+ 129              		.loc 1 39 0
+ 130              		.thumb
+ 131              		.syntax unified
+ 132 0008 3348     		ldr	r0, .L26
+ 133 000a FFF7FEFF 		bl	isr_button_StartEx
+ 134              	.LVL2:
+  40:source\asw/main.c ****     
+ 135              		.loc 1 40 0
+ 136 000e 3348     		ldr	r0, .L26+4
+ 137 0010 FFF7FEFF 		bl	isr_UART_StartEx
+ 138              	.LVL3:
+  43:source\asw/main.c ****     WaveDAC8_Start();
+ 139              		.loc 1 43 0
+ 140 0014 FFF7FEFF 		bl	UART_LOG_Start
+ 141              	.LVL4:
+  44:source\asw/main.c ****     //WaveDAC8_Enable();
+ 142              		.loc 1 44 0
+ 143 0018 FFF7FEFF 		bl	WaveDAC8_Start
+ 144              	.LVL5:
+  46:source\asw/main.c ****     ADC_StartConvert();
+ 145              		.loc 1 46 0
+ 146 001c FFF7FEFF 		bl	ADC_Start
+ 147              	.LVL6:
+  47:source\asw/main.c ****     
+ 148              		.loc 1 47 0
+ 149 0020 FFF7FEFF 		bl	ADC_StartConvert
+ 150              	.LVL7:
+  52:source\asw/main.c ****     
+ 151              		.loc 1 52 0
+ 152 0024 4FF40062 		mov	r2, #2048
+ 153 0028 0021     		movs	r1, #0
+ 154 002a 6846     		mov	r0, sp
+ 155 002c FFF7FEFF 		bl	memset
+ 156              	.LVL8:
+  57:source\asw/main.c ****  
+ 157              		.loc 1 57 0
+ 158 0030 0026     		movs	r6, #0
+  51:source\asw/main.c ****     uint16_t ADC_Array[1024] = {0};
+ 159              		.loc 1 51 0
+ 160 0032 3746     		mov	r7, r6
+ 161 0034 00E0     		b	.L14
+ 162              	.LVL9:
+ 163              	.L24:
+  65:source\asw/main.c ****                 if(toggle == 1)
+ 164              		.loc 1 65 0
+ 165 0036 0027     		movs	r7, #0
+ 166              	.LVL10:
+ 167              	.L14:
+  61:source\asw/main.c ****         {
+ 168              		.loc 1 61 0
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 7
+
+
+ 169 0038 012E     		cmp	r6, #1
+ 170 003a 16D0     		beq	.L22
+ 171 003c 16B1     		cbz	r6, .L16
+ 172 003e 022E     		cmp	r6, #2
+ 173 0040 2DD0     		beq	.L23
+ 174 0042 F9E7     		b	.L14
+ 175              	.L16:
+ 176              	.LVL11:
+  66:source\asw/main.c ****                 {
+ 177              		.loc 1 66 0
+ 178 0044 264B     		ldr	r3, .L26+8
+ 179 0046 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 180 0048 DBB2     		uxtb	r3, r3
+ 181 004a 012B     		cmp	r3, #1
+ 182 004c F3D1     		bne	.L24
+ 183              	.LVL12:
+  69:source\asw/main.c ****                 }
+ 184              		.loc 1 69 0
+ 185 004e 0027     		movs	r7, #0
+ 186 0050 234B     		ldr	r3, .L26+8
+ 187 0052 1F70     		strb	r7, [r3]
+  68:source\asw/main.c ****                     toggle = 0;
+ 188              		.loc 1 68 0
+ 189 0054 0126     		movs	r6, #1
+ 190 0056 EFE7     		b	.L14
+ 191              	.LVL13:
+ 192              	.L19:
+ 193              	.LBB2:
+  76:source\asw/main.c ****                     
+ 194              		.loc 1 76 0 discriminator 3
+ 195 0058 0020     		movs	r0, #0
+ 196 005a FFF7FEFF 		bl	ADC_IsEndConversion
+ 197              	.LVL14:
+  80:source\asw/main.c **** //                    itoa(ADC_result_mV, buffer, 10);
+ 198              		.loc 1 80 0 discriminator 3
+ 199 005e FFF7FEFF 		bl	ADC_GetResult32
+ 200              	.LVL15:
+ 201 0062 2DF81400 		strh	r0, [sp, r4, lsl #1]	@ movhi
+  74:source\asw/main.c ****                 {
+ 202              		.loc 1 74 0 discriminator 3
+ 203 0066 0134     		adds	r4, r4, #1
+ 204              	.LVL16:
+ 205 0068 00E0     		b	.L15
+ 206              	.LVL17:
+ 207              	.L22:
+ 208              	.LBE2:
+  61:source\asw/main.c ****         {
+ 209              		.loc 1 61 0
+ 210 006a 0024     		movs	r4, #0
+ 211              	.L15:
+ 212              	.LVL18:
+ 213              	.LBB3:
+  74:source\asw/main.c ****                 {
+ 214              		.loc 1 74 0 discriminator 1
+ 215 006c B4F5806F 		cmp	r4, #1024
+ 216 0070 F2DB     		blt	.L19
+ 217              	.LBE3:
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 8
+
+
+  92:source\asw/main.c ****                 {
+ 218              		.loc 1 92 0
+ 219 0072 1B4B     		ldr	r3, .L26+8
+ 220 0074 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 221 0076 002B     		cmp	r3, #0
+ 222 0078 DED0     		beq	.L14
+  95:source\asw/main.c ****                     POS = UART_TRANSFER_STATE;
+ 223              		.loc 1 95 0
+ 224 007a 0120     		movs	r0, #1
+ 225 007c FFF7FEFF 		bl	Red_LED_Write
+ 226              	.LVL19:
+  97:source\asw/main.c ****                 }
+ 227              		.loc 1 97 0
+ 228 0080 0022     		movs	r2, #0
+ 229 0082 174B     		ldr	r3, .L26+8
+ 230 0084 5A70     		strb	r2, [r3, #1]
+  96:source\asw/main.c ****                     sChRx = 0;
+ 231              		.loc 1 96 0
+ 232 0086 0226     		movs	r6, #2
+ 233 0088 D6E7     		b	.L14
+ 234              	.LVL20:
+ 235              	.L20:
+ 236              	.LBB4:
+ 104:source\asw/main.c ****                     UART_LOG_PutChar(ADC_Array[i]>>8);
+ 237              		.loc 1 104 0 discriminator 3
+ 238 008a 3DF81450 		ldrh	r5, [sp, r4, lsl #1]
+ 239 008e E8B2     		uxtb	r0, r5
+ 240 0090 FFF7FEFF 		bl	UART_LOG_PutChar
+ 241              	.LVL21:
+ 105:source\asw/main.c ****                 }
+ 242              		.loc 1 105 0 discriminator 3
+ 243 0094 280A     		lsrs	r0, r5, #8
+ 244 0096 FFF7FEFF 		bl	UART_LOG_PutChar
+ 245              	.LVL22:
+ 102:source\asw/main.c ****                 {
+ 246              		.loc 1 102 0 discriminator 3
+ 247 009a 0134     		adds	r4, r4, #1
+ 248              	.LVL23:
+ 249 009c 00E0     		b	.L17
+ 250              	.LVL24:
+ 251              	.L23:
+ 252              	.LBE4:
+  61:source\asw/main.c ****         {
+ 253              		.loc 1 61 0
+ 254 009e 0024     		movs	r4, #0
+ 255              	.L17:
+ 256              	.LVL25:
+ 257              	.LBB5:
+ 102:source\asw/main.c ****                 {
+ 258              		.loc 1 102 0 discriminator 1
+ 259 00a0 B4F5806F 		cmp	r4, #1024
+ 260 00a4 F1DB     		blt	.L20
+ 261              	.LBE5:
+ 107:source\asw/main.c ****                 
+ 262              		.loc 1 107 0
+ 263 00a6 0137     		adds	r7, r7, #1
+ 264              	.LVL26:
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 9
+
+
+ 265 00a8 FFB2     		uxtb	r7, r7
+ 266              	.LVL27:
+ 119:source\asw/main.c ****                 {
+ 267              		.loc 1 119 0
+ 268 00aa 092F     		cmp	r7, #9
+ 269 00ac 0AD8     		bhi	.L21
+ 119:source\asw/main.c ****                 {
+ 270              		.loc 1 119 0 is_stmt 0 discriminator 1
+ 271 00ae 0C4B     		ldr	r3, .L26+8
+ 272 00b0 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 273 00b2 3BB1     		cbz	r3, .L21
+ 274              	.LVL28:
+ 122:source\asw/main.c ****                     oChRx = 0;
+ 275              		.loc 1 122 0 is_stmt 1
+ 276 00b4 0020     		movs	r0, #0
+ 277 00b6 FFF7FEFF 		bl	Red_LED_Write
+ 278              	.LVL29:
+ 123:source\asw/main.c ****                 }
+ 279              		.loc 1 123 0
+ 280 00ba 0022     		movs	r2, #0
+ 281 00bc 084B     		ldr	r3, .L26+8
+ 282 00be 9A70     		strb	r2, [r3, #2]
+ 121:source\asw/main.c ****                     Red_LED_Write(0);
+ 283              		.loc 1 121 0
+ 284 00c0 0126     		movs	r6, #1
+ 123:source\asw/main.c ****                 }
+ 285              		.loc 1 123 0
+ 286 00c2 B9E7     		b	.L14
+ 287              	.LVL30:
+ 288              	.L21:
+ 125:source\asw/main.c ****                 {
+ 289              		.loc 1 125 0
+ 290 00c4 0A2F     		cmp	r7, #10
+ 291 00c6 B7D1     		bne	.L14
+ 125:source\asw/main.c ****                 {
+ 292              		.loc 1 125 0 is_stmt 0 discriminator 1
+ 293 00c8 054B     		ldr	r3, .L26+8
+ 294 00ca 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 295 00cc 002B     		cmp	r3, #0
+ 296 00ce B3D0     		beq	.L14
+ 297              	.LVL31:
+ 128:source\asw/main.c ****                 }
+ 298              		.loc 1 128 0 is_stmt 1
+ 299 00d0 0026     		movs	r6, #0
+ 300 00d2 034B     		ldr	r3, .L26+8
+ 301 00d4 9E70     		strb	r6, [r3, #2]
+ 302 00d6 AFE7     		b	.L14
+ 303              	.L27:
+ 304              		.align	2
+ 305              	.L26:
+ 306 00d8 00000000 		.word	isr_button_RisingEdge_Interrupt
+ 307 00dc 00000000 		.word	isr_UART
+ 308 00e0 00000000 		.word	.LANCHOR0
+ 309              		.cfi_endproc
+ 310              	.LFE64:
+ 311              		.size	main, .-main
+ 312              		.comm	rxDataCh,1,1
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 10
+
+
+ 313              		.global	oChRx
+ 314              		.global	sChRx
+ 315              		.global	toggle
+ 316              		.bss
+ 317              		.set	.LANCHOR0,. + 0
+ 318              		.type	toggle, %object
+ 319              		.size	toggle, 1
+ 320              	toggle:
+ 321 0000 00       		.space	1
+ 322              		.type	sChRx, %object
+ 323              		.size	sChRx, 1
+ 324              	sChRx:
+ 325 0001 00       		.space	1
+ 326              		.type	oChRx, %object
+ 327              		.size	oChRx, 1
+ 328              	oChRx:
+ 329 0002 00       		.space	1
+ 330              		.text
+ 331              	.Letext0:
+ 332              		.file 2 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.
+ 333              		.file 3 "c:\\program files (x86)\\cypress\\psoc creator\\4.4\\psoc creator\\import\\gnu\\arm\\5.4.
+ 334              		.file 4 "Generated_Source\\PSoC5/cytypes.h"
+ 335              		.file 5 "Generated_Source\\PSoC5/core_cm3.h"
+ 336              		.file 6 "Generated_Source\\PSoC5/Push_button.h"
+ 337              		.file 7 "Generated_Source\\PSoC5/UART_LOG.h"
+ 338              		.file 8 "Generated_Source\\PSoC5/ADC.h"
+ 339              		.file 9 "Generated_Source\\PSoC5/isr_button.h"
+ 340              		.file 10 "Generated_Source\\PSoC5/isr_UART.h"
+ 341              		.file 11 "Generated_Source\\PSoC5/WaveDAC8.h"
+ 342              		.file 12 "Generated_Source\\PSoC5/Red_LED.h"
+ 343              		.section	.debug_info,"",%progbits
+ 344              	.Ldebug_info0:
+ 345 0000 84030000 		.4byte	0x384
+ 346 0004 0400     		.2byte	0x4
+ 347 0006 00000000 		.4byte	.Ldebug_abbrev0
+ 348 000a 04       		.byte	0x4
+ 349 000b 01       		.uleb128 0x1
+ 350 000c 8F000000 		.4byte	.LASF46
+ 351 0010 0C       		.byte	0xc
+ 352 0011 A6020000 		.4byte	.LASF47
+ 353 0015 DE010000 		.4byte	.LASF48
+ 354 0019 30000000 		.4byte	.Ldebug_ranges0+0x30
+ 355 001d 00000000 		.4byte	0
+ 356 0021 00000000 		.4byte	.Ldebug_line0
+ 357 0025 02       		.uleb128 0x2
+ 358 0026 01       		.byte	0x1
+ 359 0027 06       		.byte	0x6
+ 360 0028 15030000 		.4byte	.LASF0
+ 361 002c 03       		.uleb128 0x3
+ 362 002d 06000000 		.4byte	.LASF3
+ 363 0031 02       		.byte	0x2
+ 364 0032 1D       		.byte	0x1d
+ 365 0033 37000000 		.4byte	0x37
+ 366 0037 02       		.uleb128 0x2
+ 367 0038 01       		.byte	0x1
+ 368 0039 08       		.byte	0x8
+ 369 003a 81000000 		.4byte	.LASF1
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 11
+
+
+ 370 003e 02       		.uleb128 0x2
+ 371 003f 02       		.byte	0x2
+ 372 0040 05       		.byte	0x5
+ 373 0041 CB010000 		.4byte	.LASF2
+ 374 0045 03       		.uleb128 0x3
+ 375 0046 AE010000 		.4byte	.LASF4
+ 376 004a 02       		.byte	0x2
+ 377 004b 2B       		.byte	0x2b
+ 378 004c 50000000 		.4byte	0x50
+ 379 0050 02       		.uleb128 0x2
+ 380 0051 02       		.byte	0x2
+ 381 0052 07       		.byte	0x7
+ 382 0053 70010000 		.4byte	.LASF5
+ 383 0057 03       		.uleb128 0x3
+ 384 0058 21000000 		.4byte	.LASF6
+ 385 005c 02       		.byte	0x2
+ 386 005d 3F       		.byte	0x3f
+ 387 005e 62000000 		.4byte	0x62
+ 388 0062 02       		.uleb128 0x2
+ 389 0063 04       		.byte	0x4
+ 390 0064 05       		.byte	0x5
+ 391 0065 F6020000 		.4byte	.LASF7
+ 392 0069 02       		.uleb128 0x2
+ 393 006a 04       		.byte	0x4
+ 394 006b 07       		.byte	0x7
+ 395 006c B9010000 		.4byte	.LASF8
+ 396 0070 02       		.uleb128 0x2
+ 397 0071 08       		.byte	0x8
+ 398 0072 05       		.byte	0x5
+ 399 0073 98020000 		.4byte	.LASF9
+ 400 0077 02       		.uleb128 0x2
+ 401 0078 08       		.byte	0x8
+ 402 0079 07       		.byte	0x7
+ 403 007a 4A020000 		.4byte	.LASF10
+ 404 007e 04       		.uleb128 0x4
+ 405 007f 04       		.byte	0x4
+ 406 0080 05       		.byte	0x5
+ 407 0081 696E7400 		.ascii	"int\000"
+ 408 0085 02       		.uleb128 0x2
+ 409 0086 04       		.byte	0x4
+ 410 0087 07       		.byte	0x7
+ 411 0088 3D020000 		.4byte	.LASF11
+ 412 008c 02       		.uleb128 0x2
+ 413 008d 08       		.byte	0x8
+ 414 008e 04       		.byte	0x4
+ 415 008f FF020000 		.4byte	.LASF12
+ 416 0093 02       		.uleb128 0x2
+ 417 0094 04       		.byte	0x4
+ 418 0095 07       		.byte	0x7
+ 419 0096 8A020000 		.4byte	.LASF13
+ 420 009a 02       		.uleb128 0x2
+ 421 009b 01       		.byte	0x1
+ 422 009c 08       		.byte	0x8
+ 423 009d B8020000 		.4byte	.LASF14
+ 424 00a1 03       		.uleb128 0x3
+ 425 00a2 61020000 		.4byte	.LASF15
+ 426 00a6 03       		.byte	0x3
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 12
+
+
+ 427 00a7 18       		.byte	0x18
+ 428 00a8 2C000000 		.4byte	0x2c
+ 429 00ac 03       		.uleb128 0x3
+ 430 00ad DA020000 		.4byte	.LASF16
+ 431 00b1 03       		.byte	0x3
+ 432 00b2 24       		.byte	0x24
+ 433 00b3 45000000 		.4byte	0x45
+ 434 00b7 03       		.uleb128 0x3
+ 435 00b8 82020000 		.4byte	.LASF17
+ 436 00bc 03       		.byte	0x3
+ 437 00bd 2C       		.byte	0x2c
+ 438 00be 57000000 		.4byte	0x57
+ 439 00c2 05       		.uleb128 0x5
+ 440 00c3 00000000 		.4byte	.LASF18
+ 441 00c7 04       		.byte	0x4
+ 442 00c8 E901     		.2byte	0x1e9
+ 443 00ca 37000000 		.4byte	0x37
+ 444 00ce 02       		.uleb128 0x2
+ 445 00cf 04       		.byte	0x4
+ 446 00d0 04       		.byte	0x4
+ 447 00d1 66000000 		.4byte	.LASF19
+ 448 00d5 02       		.uleb128 0x2
+ 449 00d6 08       		.byte	0x8
+ 450 00d7 04       		.byte	0x4
+ 451 00d8 83010000 		.4byte	.LASF20
+ 452 00dc 06       		.uleb128 0x6
+ 453 00dd C2000000 		.4byte	0xc2
+ 454 00e1 07       		.uleb128 0x7
+ 455 00e2 01       		.byte	0x1
+ 456 00e3 37000000 		.4byte	0x37
+ 457 00e7 01       		.byte	0x1
+ 458 00e8 18       		.byte	0x18
+ 459 00e9 00010000 		.4byte	0x100
+ 460 00ed 08       		.uleb128 0x8
+ 461 00ee 32030000 		.4byte	.LASF21
+ 462 00f2 00       		.byte	0
+ 463 00f3 08       		.uleb128 0x8
+ 464 00f4 BD020000 		.4byte	.LASF22
+ 465 00f8 01       		.byte	0x1
+ 466 00f9 08       		.uleb128 0x8
+ 467 00fa 34000000 		.4byte	.LASF23
+ 468 00fe 02       		.byte	0x2
+ 469 00ff 00       		.byte	0
+ 470 0100 03       		.uleb128 0x3
+ 471 0101 D2020000 		.4byte	.LASF24
+ 472 0105 01       		.byte	0x1
+ 473 0106 1D       		.byte	0x1d
+ 474 0107 E1000000 		.4byte	0xe1
+ 475 010b 09       		.uleb128 0x9
+ 476 010c 50010000 		.4byte	.LASF25
+ 477 0110 01       		.byte	0x1
+ 478 0111 8D       		.byte	0x8d
+ 479 0112 00000000 		.4byte	.LFB65
+ 480 0116 1C000000 		.4byte	.LFE65-.LFB65
+ 481 011a 01       		.uleb128 0x1
+ 482 011b 9C       		.byte	0x9c
+ 483 011c 2A010000 		.4byte	0x12a
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 13
+
+
+ 484 0120 0A       		.uleb128 0xa
+ 485 0121 06000000 		.4byte	.LVL0
+ 486 0125 FA020000 		.4byte	0x2fa
+ 487 0129 00       		.byte	0
+ 488 012a 09       		.uleb128 0x9
+ 489 012b D5010000 		.4byte	.LASF26
+ 490 012f 01       		.byte	0x1
+ 491 0130 97       		.byte	0x97
+ 492 0131 00000000 		.4byte	.LFB66
+ 493 0135 28000000 		.4byte	.LFE66-.LFB66
+ 494 0139 01       		.uleb128 0x1
+ 495 013a 9C       		.byte	0x9c
+ 496 013b 49010000 		.4byte	0x149
+ 497 013f 0A       		.uleb128 0xa
+ 498 0140 06000000 		.4byte	.LVL1
+ 499 0144 05030000 		.4byte	0x305
+ 500 0148 00       		.byte	0
+ 501 0149 0B       		.uleb128 0xb
+ 502 014a 93020000 		.4byte	.LASF49
+ 503 014e 01       		.byte	0x1
+ 504 014f 23       		.byte	0x23
+ 505 0150 7E000000 		.4byte	0x7e
+ 506 0154 00000000 		.4byte	.LFB64
+ 507 0158 E4000000 		.4byte	.LFE64-.LFB64
+ 508 015c 01       		.uleb128 0x1
+ 509 015d 9C       		.byte	0x9c
+ 510 015e 94020000 		.4byte	0x294
+ 511 0162 0C       		.uleb128 0xc
+ 512 0163 CC020000 		.4byte	.LASF27
+ 513 0167 01       		.byte	0x1
+ 514 0168 33       		.byte	0x33
+ 515 0169 A1000000 		.4byte	0xa1
+ 516 016d 00000000 		.4byte	.LLST0
+ 517 0171 0D       		.uleb128 0xd
+ 518 0172 0B030000 		.4byte	.LASF28
+ 519 0176 01       		.byte	0x1
+ 520 0177 34       		.byte	0x34
+ 521 0178 94020000 		.4byte	0x294
+ 522 017c 03       		.uleb128 0x3
+ 523 017d 91       		.byte	0x91
+ 524 017e E86F     		.sleb128 -2072
+ 525 0180 0E       		.uleb128 0xe
+ 526 0181 504F5300 		.ascii	"POS\000"
+ 527 0185 01       		.byte	0x1
+ 528 0186 39       		.byte	0x39
+ 529 0187 00010000 		.4byte	0x100
+ 530 018b 41000000 		.4byte	.LLST1
+ 531 018f 0F       		.uleb128 0xf
+ 532 0190 00000000 		.4byte	.Ldebug_ranges0+0
+ 533 0194 C2010000 		.4byte	0x1c2
+ 534 0198 0E       		.uleb128 0xe
+ 535 0199 6900     		.ascii	"i\000"
+ 536 019b 01       		.byte	0x1
+ 537 019c 4A       		.byte	0x4a
+ 538 019d 7E000000 		.4byte	0x7e
+ 539 01a1 B1000000 		.4byte	.LLST2
+ 540 01a5 10       		.uleb128 0x10
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 14
+
+
+ 541 01a6 5E000000 		.4byte	.LVL14
+ 542 01aa 10030000 		.4byte	0x310
+ 543 01ae B8010000 		.4byte	0x1b8
+ 544 01b2 11       		.uleb128 0x11
+ 545 01b3 01       		.uleb128 0x1
+ 546 01b4 50       		.byte	0x50
+ 547 01b5 01       		.uleb128 0x1
+ 548 01b6 30       		.byte	0x30
+ 549 01b7 00       		.byte	0
+ 550 01b8 0A       		.uleb128 0xa
+ 551 01b9 62000000 		.4byte	.LVL15
+ 552 01bd 1B030000 		.4byte	0x31b
+ 553 01c1 00       		.byte	0
+ 554 01c2 0F       		.uleb128 0xf
+ 555 01c3 18000000 		.4byte	.Ldebug_ranges0+0x18
+ 556 01c7 FF010000 		.4byte	0x1ff
+ 557 01cb 0E       		.uleb128 0xe
+ 558 01cc 6900     		.ascii	"i\000"
+ 559 01ce 01       		.byte	0x1
+ 560 01cf 66       		.byte	0x66
+ 561 01d0 7E000000 		.4byte	0x7e
+ 562 01d4 CF000000 		.4byte	.LLST3
+ 563 01d8 10       		.uleb128 0x10
+ 564 01d9 94000000 		.4byte	.LVL21
+ 565 01dd 26030000 		.4byte	0x326
+ 566 01e1 EC010000 		.4byte	0x1ec
+ 567 01e5 11       		.uleb128 0x11
+ 568 01e6 01       		.uleb128 0x1
+ 569 01e7 50       		.byte	0x50
+ 570 01e8 02       		.uleb128 0x2
+ 571 01e9 75       		.byte	0x75
+ 572 01ea 00       		.sleb128 0
+ 573 01eb 00       		.byte	0
+ 574 01ec 12       		.uleb128 0x12
+ 575 01ed 9A000000 		.4byte	.LVL22
+ 576 01f1 26030000 		.4byte	0x326
+ 577 01f5 11       		.uleb128 0x11
+ 578 01f6 01       		.uleb128 0x1
+ 579 01f7 50       		.byte	0x50
+ 580 01f8 04       		.uleb128 0x4
+ 581 01f9 75       		.byte	0x75
+ 582 01fa 00       		.sleb128 0
+ 583 01fb 38       		.byte	0x38
+ 584 01fc 25       		.byte	0x25
+ 585 01fd 00       		.byte	0
+ 586 01fe 00       		.byte	0
+ 587 01ff 10       		.uleb128 0x10
+ 588 0200 0E000000 		.4byte	.LVL2
+ 589 0204 31030000 		.4byte	0x331
+ 590 0208 16020000 		.4byte	0x216
+ 591 020c 11       		.uleb128 0x11
+ 592 020d 01       		.uleb128 0x1
+ 593 020e 50       		.byte	0x50
+ 594 020f 05       		.uleb128 0x5
+ 595 0210 03       		.byte	0x3
+ 596 0211 00000000 		.4byte	isr_button_RisingEdge_Interrupt
+ 597 0215 00       		.byte	0
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 15
+
+
+ 598 0216 10       		.uleb128 0x10
+ 599 0217 14000000 		.4byte	.LVL3
+ 600 021b 3C030000 		.4byte	0x33c
+ 601 021f 2D020000 		.4byte	0x22d
+ 602 0223 11       		.uleb128 0x11
+ 603 0224 01       		.uleb128 0x1
+ 604 0225 50       		.byte	0x50
+ 605 0226 05       		.uleb128 0x5
+ 606 0227 03       		.byte	0x3
+ 607 0228 00000000 		.4byte	isr_UART
+ 608 022c 00       		.byte	0
+ 609 022d 0A       		.uleb128 0xa
+ 610 022e 18000000 		.4byte	.LVL4
+ 611 0232 47030000 		.4byte	0x347
+ 612 0236 0A       		.uleb128 0xa
+ 613 0237 1C000000 		.4byte	.LVL5
+ 614 023b 52030000 		.4byte	0x352
+ 615 023f 0A       		.uleb128 0xa
+ 616 0240 20000000 		.4byte	.LVL6
+ 617 0244 5D030000 		.4byte	0x35d
+ 618 0248 0A       		.uleb128 0xa
+ 619 0249 24000000 		.4byte	.LVL7
+ 620 024d 68030000 		.4byte	0x368
+ 621 0251 10       		.uleb128 0x10
+ 622 0252 30000000 		.4byte	.LVL8
+ 623 0256 73030000 		.4byte	0x373
+ 624 025a 71020000 		.4byte	0x271
+ 625 025e 11       		.uleb128 0x11
+ 626 025f 01       		.uleb128 0x1
+ 627 0260 50       		.byte	0x50
+ 628 0261 02       		.uleb128 0x2
+ 629 0262 7D       		.byte	0x7d
+ 630 0263 00       		.sleb128 0
+ 631 0264 11       		.uleb128 0x11
+ 632 0265 01       		.uleb128 0x1
+ 633 0266 51       		.byte	0x51
+ 634 0267 01       		.uleb128 0x1
+ 635 0268 30       		.byte	0x30
+ 636 0269 11       		.uleb128 0x11
+ 637 026a 01       		.uleb128 0x1
+ 638 026b 52       		.byte	0x52
+ 639 026c 03       		.uleb128 0x3
+ 640 026d 0A       		.byte	0xa
+ 641 026e 0008     		.2byte	0x800
+ 642 0270 00       		.byte	0
+ 643 0271 10       		.uleb128 0x10
+ 644 0272 80000000 		.4byte	.LVL19
+ 645 0276 7C030000 		.4byte	0x37c
+ 646 027a 84020000 		.4byte	0x284
+ 647 027e 11       		.uleb128 0x11
+ 648 027f 01       		.uleb128 0x1
+ 649 0280 50       		.byte	0x50
+ 650 0281 01       		.uleb128 0x1
+ 651 0282 31       		.byte	0x31
+ 652 0283 00       		.byte	0
+ 653 0284 12       		.uleb128 0x12
+ 654 0285 BA000000 		.4byte	.LVL29
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 16
+
+
+ 655 0289 7C030000 		.4byte	0x37c
+ 656 028d 11       		.uleb128 0x11
+ 657 028e 01       		.uleb128 0x1
+ 658 028f 50       		.byte	0x50
+ 659 0290 01       		.uleb128 0x1
+ 660 0291 30       		.byte	0x30
+ 661 0292 00       		.byte	0
+ 662 0293 00       		.byte	0
+ 663 0294 13       		.uleb128 0x13
+ 664 0295 AC000000 		.4byte	0xac
+ 665 0299 A5020000 		.4byte	0x2a5
+ 666 029d 14       		.uleb128 0x14
+ 667 029e 93000000 		.4byte	0x93
+ 668 02a2 FF03     		.2byte	0x3ff
+ 669 02a4 00       		.byte	0
+ 670 02a5 15       		.uleb128 0x15
+ 671 02a6 8A010000 		.4byte	.LASF29
+ 672 02aa 05       		.byte	0x5
+ 673 02ab 1207     		.2byte	0x712
+ 674 02ad B1020000 		.4byte	0x2b1
+ 675 02b1 06       		.uleb128 0x6
+ 676 02b2 B7000000 		.4byte	0xb7
+ 677 02b6 16       		.uleb128 0x16
+ 678 02b7 5F000000 		.4byte	.LASF30
+ 679 02bb 01       		.byte	0x1
+ 680 02bc 11       		.byte	0x11
+ 681 02bd DC000000 		.4byte	0xdc
+ 682 02c1 05       		.uleb128 0x5
+ 683 02c2 03       		.byte	0x3
+ 684 02c3 00000000 		.4byte	toggle
+ 685 02c7 16       		.uleb128 0x16
+ 686 02c8 7B000000 		.4byte	.LASF31
+ 687 02cc 01       		.byte	0x1
+ 688 02cd 1F       		.byte	0x1f
+ 689 02ce A1000000 		.4byte	0xa1
+ 690 02d2 05       		.uleb128 0x5
+ 691 02d3 03       		.byte	0x3
+ 692 02d4 00000000 		.4byte	sChRx
+ 693 02d8 16       		.uleb128 0x16
+ 694 02d9 48000000 		.4byte	.LASF32
+ 695 02dd 01       		.byte	0x1
+ 696 02de 20       		.byte	0x20
+ 697 02df A1000000 		.4byte	0xa1
+ 698 02e3 05       		.uleb128 0x5
+ 699 02e4 03       		.byte	0x3
+ 700 02e5 00000000 		.4byte	oChRx
+ 701 02e9 16       		.uleb128 0x16
+ 702 02ea 2B000000 		.4byte	.LASF33
+ 703 02ee 01       		.byte	0x1
+ 704 02ef 21       		.byte	0x21
+ 705 02f0 9A000000 		.4byte	0x9a
+ 706 02f4 05       		.uleb128 0x5
+ 707 02f5 03       		.byte	0x3
+ 708 02f6 00000000 		.4byte	rxDataCh
+ 709 02fa 17       		.uleb128 0x17
+ 710 02fb 22020000 		.4byte	.LASF34
+ 711 02ff 22020000 		.4byte	.LASF34
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 17
+
+
+ 712 0303 06       		.byte	0x6
+ 713 0304 2B       		.byte	0x2b
+ 714 0305 17       		.uleb128 0x17
+ 715 0306 4E000000 		.4byte	.LASF35
+ 716 030a 4E000000 		.4byte	.LASF35
+ 717 030e 07       		.byte	0x7
+ 718 030f 71       		.byte	0x71
+ 719 0310 17       		.uleb128 0x17
+ 720 0311 3C010000 		.4byte	.LASF36
+ 721 0315 3C010000 		.4byte	.LASF36
+ 722 0319 08       		.byte	0x8
+ 723 031a 3F       		.byte	0x3f
+ 724 031b 17       		.uleb128 0x17
+ 725 031c 97010000 		.4byte	.LASF37
+ 726 0320 97010000 		.4byte	.LASF37
+ 727 0324 08       		.byte	0x8
+ 728 0325 42       		.byte	0x42
+ 729 0326 17       		.uleb128 0x17
+ 730 0327 10000000 		.4byte	.LASF38
+ 731 032b 10000000 		.4byte	.LASF38
+ 732 032f 07       		.byte	0x7
+ 733 0330 8A       		.byte	0x8a
+ 734 0331 17       		.uleb128 0x17
+ 735 0332 E3020000 		.4byte	.LASF39
+ 736 0336 E3020000 		.4byte	.LASF39
+ 737 033a 09       		.byte	0x9
+ 738 033b 18       		.byte	0x18
+ 739 033c 17       		.uleb128 0x17
+ 740 033d 21030000 		.4byte	.LASF40
+ 741 0341 21030000 		.4byte	.LASF40
+ 742 0345 0A       		.byte	0xa
+ 743 0346 18       		.byte	0x18
+ 744 0347 17       		.uleb128 0x17
+ 745 0348 73020000 		.4byte	.LASF41
+ 746 034c 73020000 		.4byte	.LASF41
+ 747 0350 07       		.byte	0x7
+ 748 0351 54       		.byte	0x54
+ 749 0352 17       		.uleb128 0x17
+ 750 0353 6C000000 		.4byte	.LASF42
+ 751 0357 6C000000 		.4byte	.LASF42
+ 752 035b 0B       		.byte	0xb
+ 753 035c 67       		.byte	0x67
+ 754 035d 17       		.uleb128 0x17
+ 755 035e 69020000 		.4byte	.LASF43
+ 756 0362 69020000 		.4byte	.LASF43
+ 757 0366 08       		.byte	0x8
+ 758 0367 3A       		.byte	0x3a
+ 759 0368 17       		.uleb128 0x17
+ 760 0369 1D010000 		.4byte	.LASF44
+ 761 036d 1D010000 		.4byte	.LASF44
+ 762 0371 08       		.byte	0x8
+ 763 0372 3D       		.byte	0x3d
+ 764 0373 18       		.uleb128 0x18
+ 765 0374 A7010000 		.4byte	.LASF50
+ 766 0378 A7010000 		.4byte	.LASF50
+ 767 037c 17       		.uleb128 0x17
+ 768 037d 2E010000 		.4byte	.LASF45
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 18
+
+
+ 769 0381 2E010000 		.4byte	.LASF45
+ 770 0385 0C       		.byte	0xc
+ 771 0386 26       		.byte	0x26
+ 772 0387 00       		.byte	0
+ 773              		.section	.debug_abbrev,"",%progbits
+ 774              	.Ldebug_abbrev0:
+ 775 0000 01       		.uleb128 0x1
+ 776 0001 11       		.uleb128 0x11
+ 777 0002 01       		.byte	0x1
+ 778 0003 25       		.uleb128 0x25
+ 779 0004 0E       		.uleb128 0xe
+ 780 0005 13       		.uleb128 0x13
+ 781 0006 0B       		.uleb128 0xb
+ 782 0007 03       		.uleb128 0x3
+ 783 0008 0E       		.uleb128 0xe
+ 784 0009 1B       		.uleb128 0x1b
+ 785 000a 0E       		.uleb128 0xe
+ 786 000b 55       		.uleb128 0x55
+ 787 000c 17       		.uleb128 0x17
+ 788 000d 11       		.uleb128 0x11
+ 789 000e 01       		.uleb128 0x1
+ 790 000f 10       		.uleb128 0x10
+ 791 0010 17       		.uleb128 0x17
+ 792 0011 00       		.byte	0
+ 793 0012 00       		.byte	0
+ 794 0013 02       		.uleb128 0x2
+ 795 0014 24       		.uleb128 0x24
+ 796 0015 00       		.byte	0
+ 797 0016 0B       		.uleb128 0xb
+ 798 0017 0B       		.uleb128 0xb
+ 799 0018 3E       		.uleb128 0x3e
+ 800 0019 0B       		.uleb128 0xb
+ 801 001a 03       		.uleb128 0x3
+ 802 001b 0E       		.uleb128 0xe
+ 803 001c 00       		.byte	0
+ 804 001d 00       		.byte	0
+ 805 001e 03       		.uleb128 0x3
+ 806 001f 16       		.uleb128 0x16
+ 807 0020 00       		.byte	0
+ 808 0021 03       		.uleb128 0x3
+ 809 0022 0E       		.uleb128 0xe
+ 810 0023 3A       		.uleb128 0x3a
+ 811 0024 0B       		.uleb128 0xb
+ 812 0025 3B       		.uleb128 0x3b
+ 813 0026 0B       		.uleb128 0xb
+ 814 0027 49       		.uleb128 0x49
+ 815 0028 13       		.uleb128 0x13
+ 816 0029 00       		.byte	0
+ 817 002a 00       		.byte	0
+ 818 002b 04       		.uleb128 0x4
+ 819 002c 24       		.uleb128 0x24
+ 820 002d 00       		.byte	0
+ 821 002e 0B       		.uleb128 0xb
+ 822 002f 0B       		.uleb128 0xb
+ 823 0030 3E       		.uleb128 0x3e
+ 824 0031 0B       		.uleb128 0xb
+ 825 0032 03       		.uleb128 0x3
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 19
+
+
+ 826 0033 08       		.uleb128 0x8
+ 827 0034 00       		.byte	0
+ 828 0035 00       		.byte	0
+ 829 0036 05       		.uleb128 0x5
+ 830 0037 16       		.uleb128 0x16
+ 831 0038 00       		.byte	0
+ 832 0039 03       		.uleb128 0x3
+ 833 003a 0E       		.uleb128 0xe
+ 834 003b 3A       		.uleb128 0x3a
+ 835 003c 0B       		.uleb128 0xb
+ 836 003d 3B       		.uleb128 0x3b
+ 837 003e 05       		.uleb128 0x5
+ 838 003f 49       		.uleb128 0x49
+ 839 0040 13       		.uleb128 0x13
+ 840 0041 00       		.byte	0
+ 841 0042 00       		.byte	0
+ 842 0043 06       		.uleb128 0x6
+ 843 0044 35       		.uleb128 0x35
+ 844 0045 00       		.byte	0
+ 845 0046 49       		.uleb128 0x49
+ 846 0047 13       		.uleb128 0x13
+ 847 0048 00       		.byte	0
+ 848 0049 00       		.byte	0
+ 849 004a 07       		.uleb128 0x7
+ 850 004b 04       		.uleb128 0x4
+ 851 004c 01       		.byte	0x1
+ 852 004d 0B       		.uleb128 0xb
+ 853 004e 0B       		.uleb128 0xb
+ 854 004f 49       		.uleb128 0x49
+ 855 0050 13       		.uleb128 0x13
+ 856 0051 3A       		.uleb128 0x3a
+ 857 0052 0B       		.uleb128 0xb
+ 858 0053 3B       		.uleb128 0x3b
+ 859 0054 0B       		.uleb128 0xb
+ 860 0055 01       		.uleb128 0x1
+ 861 0056 13       		.uleb128 0x13
+ 862 0057 00       		.byte	0
+ 863 0058 00       		.byte	0
+ 864 0059 08       		.uleb128 0x8
+ 865 005a 28       		.uleb128 0x28
+ 866 005b 00       		.byte	0
+ 867 005c 03       		.uleb128 0x3
+ 868 005d 0E       		.uleb128 0xe
+ 869 005e 1C       		.uleb128 0x1c
+ 870 005f 0B       		.uleb128 0xb
+ 871 0060 00       		.byte	0
+ 872 0061 00       		.byte	0
+ 873 0062 09       		.uleb128 0x9
+ 874 0063 2E       		.uleb128 0x2e
+ 875 0064 01       		.byte	0x1
+ 876 0065 3F       		.uleb128 0x3f
+ 877 0066 19       		.uleb128 0x19
+ 878 0067 03       		.uleb128 0x3
+ 879 0068 0E       		.uleb128 0xe
+ 880 0069 3A       		.uleb128 0x3a
+ 881 006a 0B       		.uleb128 0xb
+ 882 006b 3B       		.uleb128 0x3b
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 20
+
+
+ 883 006c 0B       		.uleb128 0xb
+ 884 006d 27       		.uleb128 0x27
+ 885 006e 19       		.uleb128 0x19
+ 886 006f 11       		.uleb128 0x11
+ 887 0070 01       		.uleb128 0x1
+ 888 0071 12       		.uleb128 0x12
+ 889 0072 06       		.uleb128 0x6
+ 890 0073 40       		.uleb128 0x40
+ 891 0074 18       		.uleb128 0x18
+ 892 0075 9742     		.uleb128 0x2117
+ 893 0077 19       		.uleb128 0x19
+ 894 0078 01       		.uleb128 0x1
+ 895 0079 13       		.uleb128 0x13
+ 896 007a 00       		.byte	0
+ 897 007b 00       		.byte	0
+ 898 007c 0A       		.uleb128 0xa
+ 899 007d 898201   		.uleb128 0x4109
+ 900 0080 00       		.byte	0
+ 901 0081 11       		.uleb128 0x11
+ 902 0082 01       		.uleb128 0x1
+ 903 0083 31       		.uleb128 0x31
+ 904 0084 13       		.uleb128 0x13
+ 905 0085 00       		.byte	0
+ 906 0086 00       		.byte	0
+ 907 0087 0B       		.uleb128 0xb
+ 908 0088 2E       		.uleb128 0x2e
+ 909 0089 01       		.byte	0x1
+ 910 008a 3F       		.uleb128 0x3f
+ 911 008b 19       		.uleb128 0x19
+ 912 008c 03       		.uleb128 0x3
+ 913 008d 0E       		.uleb128 0xe
+ 914 008e 3A       		.uleb128 0x3a
+ 915 008f 0B       		.uleb128 0xb
+ 916 0090 3B       		.uleb128 0x3b
+ 917 0091 0B       		.uleb128 0xb
+ 918 0092 27       		.uleb128 0x27
+ 919 0093 19       		.uleb128 0x19
+ 920 0094 49       		.uleb128 0x49
+ 921 0095 13       		.uleb128 0x13
+ 922 0096 8701     		.uleb128 0x87
+ 923 0098 19       		.uleb128 0x19
+ 924 0099 11       		.uleb128 0x11
+ 925 009a 01       		.uleb128 0x1
+ 926 009b 12       		.uleb128 0x12
+ 927 009c 06       		.uleb128 0x6
+ 928 009d 40       		.uleb128 0x40
+ 929 009e 18       		.uleb128 0x18
+ 930 009f 9742     		.uleb128 0x2117
+ 931 00a1 19       		.uleb128 0x19
+ 932 00a2 01       		.uleb128 0x1
+ 933 00a3 13       		.uleb128 0x13
+ 934 00a4 00       		.byte	0
+ 935 00a5 00       		.byte	0
+ 936 00a6 0C       		.uleb128 0xc
+ 937 00a7 34       		.uleb128 0x34
+ 938 00a8 00       		.byte	0
+ 939 00a9 03       		.uleb128 0x3
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 21
+
+
+ 940 00aa 0E       		.uleb128 0xe
+ 941 00ab 3A       		.uleb128 0x3a
+ 942 00ac 0B       		.uleb128 0xb
+ 943 00ad 3B       		.uleb128 0x3b
+ 944 00ae 0B       		.uleb128 0xb
+ 945 00af 49       		.uleb128 0x49
+ 946 00b0 13       		.uleb128 0x13
+ 947 00b1 02       		.uleb128 0x2
+ 948 00b2 17       		.uleb128 0x17
+ 949 00b3 00       		.byte	0
+ 950 00b4 00       		.byte	0
+ 951 00b5 0D       		.uleb128 0xd
+ 952 00b6 34       		.uleb128 0x34
+ 953 00b7 00       		.byte	0
+ 954 00b8 03       		.uleb128 0x3
+ 955 00b9 0E       		.uleb128 0xe
+ 956 00ba 3A       		.uleb128 0x3a
+ 957 00bb 0B       		.uleb128 0xb
+ 958 00bc 3B       		.uleb128 0x3b
+ 959 00bd 0B       		.uleb128 0xb
+ 960 00be 49       		.uleb128 0x49
+ 961 00bf 13       		.uleb128 0x13
+ 962 00c0 02       		.uleb128 0x2
+ 963 00c1 18       		.uleb128 0x18
+ 964 00c2 00       		.byte	0
+ 965 00c3 00       		.byte	0
+ 966 00c4 0E       		.uleb128 0xe
+ 967 00c5 34       		.uleb128 0x34
+ 968 00c6 00       		.byte	0
+ 969 00c7 03       		.uleb128 0x3
+ 970 00c8 08       		.uleb128 0x8
+ 971 00c9 3A       		.uleb128 0x3a
+ 972 00ca 0B       		.uleb128 0xb
+ 973 00cb 3B       		.uleb128 0x3b
+ 974 00cc 0B       		.uleb128 0xb
+ 975 00cd 49       		.uleb128 0x49
+ 976 00ce 13       		.uleb128 0x13
+ 977 00cf 02       		.uleb128 0x2
+ 978 00d0 17       		.uleb128 0x17
+ 979 00d1 00       		.byte	0
+ 980 00d2 00       		.byte	0
+ 981 00d3 0F       		.uleb128 0xf
+ 982 00d4 0B       		.uleb128 0xb
+ 983 00d5 01       		.byte	0x1
+ 984 00d6 55       		.uleb128 0x55
+ 985 00d7 17       		.uleb128 0x17
+ 986 00d8 01       		.uleb128 0x1
+ 987 00d9 13       		.uleb128 0x13
+ 988 00da 00       		.byte	0
+ 989 00db 00       		.byte	0
+ 990 00dc 10       		.uleb128 0x10
+ 991 00dd 898201   		.uleb128 0x4109
+ 992 00e0 01       		.byte	0x1
+ 993 00e1 11       		.uleb128 0x11
+ 994 00e2 01       		.uleb128 0x1
+ 995 00e3 31       		.uleb128 0x31
+ 996 00e4 13       		.uleb128 0x13
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 22
+
+
+ 997 00e5 01       		.uleb128 0x1
+ 998 00e6 13       		.uleb128 0x13
+ 999 00e7 00       		.byte	0
+ 1000 00e8 00       		.byte	0
+ 1001 00e9 11       		.uleb128 0x11
+ 1002 00ea 8A8201   		.uleb128 0x410a
+ 1003 00ed 00       		.byte	0
+ 1004 00ee 02       		.uleb128 0x2
+ 1005 00ef 18       		.uleb128 0x18
+ 1006 00f0 9142     		.uleb128 0x2111
+ 1007 00f2 18       		.uleb128 0x18
+ 1008 00f3 00       		.byte	0
+ 1009 00f4 00       		.byte	0
+ 1010 00f5 12       		.uleb128 0x12
+ 1011 00f6 898201   		.uleb128 0x4109
+ 1012 00f9 01       		.byte	0x1
+ 1013 00fa 11       		.uleb128 0x11
+ 1014 00fb 01       		.uleb128 0x1
+ 1015 00fc 31       		.uleb128 0x31
+ 1016 00fd 13       		.uleb128 0x13
+ 1017 00fe 00       		.byte	0
+ 1018 00ff 00       		.byte	0
+ 1019 0100 13       		.uleb128 0x13
+ 1020 0101 01       		.uleb128 0x1
+ 1021 0102 01       		.byte	0x1
+ 1022 0103 49       		.uleb128 0x49
+ 1023 0104 13       		.uleb128 0x13
+ 1024 0105 01       		.uleb128 0x1
+ 1025 0106 13       		.uleb128 0x13
+ 1026 0107 00       		.byte	0
+ 1027 0108 00       		.byte	0
+ 1028 0109 14       		.uleb128 0x14
+ 1029 010a 21       		.uleb128 0x21
+ 1030 010b 00       		.byte	0
+ 1031 010c 49       		.uleb128 0x49
+ 1032 010d 13       		.uleb128 0x13
+ 1033 010e 2F       		.uleb128 0x2f
+ 1034 010f 05       		.uleb128 0x5
+ 1035 0110 00       		.byte	0
+ 1036 0111 00       		.byte	0
+ 1037 0112 15       		.uleb128 0x15
+ 1038 0113 34       		.uleb128 0x34
+ 1039 0114 00       		.byte	0
+ 1040 0115 03       		.uleb128 0x3
+ 1041 0116 0E       		.uleb128 0xe
+ 1042 0117 3A       		.uleb128 0x3a
+ 1043 0118 0B       		.uleb128 0xb
+ 1044 0119 3B       		.uleb128 0x3b
+ 1045 011a 05       		.uleb128 0x5
+ 1046 011b 49       		.uleb128 0x49
+ 1047 011c 13       		.uleb128 0x13
+ 1048 011d 3F       		.uleb128 0x3f
+ 1049 011e 19       		.uleb128 0x19
+ 1050 011f 3C       		.uleb128 0x3c
+ 1051 0120 19       		.uleb128 0x19
+ 1052 0121 00       		.byte	0
+ 1053 0122 00       		.byte	0
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 23
+
+
+ 1054 0123 16       		.uleb128 0x16
+ 1055 0124 34       		.uleb128 0x34
+ 1056 0125 00       		.byte	0
+ 1057 0126 03       		.uleb128 0x3
+ 1058 0127 0E       		.uleb128 0xe
+ 1059 0128 3A       		.uleb128 0x3a
+ 1060 0129 0B       		.uleb128 0xb
+ 1061 012a 3B       		.uleb128 0x3b
+ 1062 012b 0B       		.uleb128 0xb
+ 1063 012c 49       		.uleb128 0x49
+ 1064 012d 13       		.uleb128 0x13
+ 1065 012e 3F       		.uleb128 0x3f
+ 1066 012f 19       		.uleb128 0x19
+ 1067 0130 02       		.uleb128 0x2
+ 1068 0131 18       		.uleb128 0x18
+ 1069 0132 00       		.byte	0
+ 1070 0133 00       		.byte	0
+ 1071 0134 17       		.uleb128 0x17
+ 1072 0135 2E       		.uleb128 0x2e
+ 1073 0136 00       		.byte	0
+ 1074 0137 3F       		.uleb128 0x3f
+ 1075 0138 19       		.uleb128 0x19
+ 1076 0139 3C       		.uleb128 0x3c
+ 1077 013a 19       		.uleb128 0x19
+ 1078 013b 6E       		.uleb128 0x6e
+ 1079 013c 0E       		.uleb128 0xe
+ 1080 013d 03       		.uleb128 0x3
+ 1081 013e 0E       		.uleb128 0xe
+ 1082 013f 3A       		.uleb128 0x3a
+ 1083 0140 0B       		.uleb128 0xb
+ 1084 0141 3B       		.uleb128 0x3b
+ 1085 0142 0B       		.uleb128 0xb
+ 1086 0143 00       		.byte	0
+ 1087 0144 00       		.byte	0
+ 1088 0145 18       		.uleb128 0x18
+ 1089 0146 2E       		.uleb128 0x2e
+ 1090 0147 00       		.byte	0
+ 1091 0148 3F       		.uleb128 0x3f
+ 1092 0149 19       		.uleb128 0x19
+ 1093 014a 3C       		.uleb128 0x3c
+ 1094 014b 19       		.uleb128 0x19
+ 1095 014c 6E       		.uleb128 0x6e
+ 1096 014d 0E       		.uleb128 0xe
+ 1097 014e 03       		.uleb128 0x3
+ 1098 014f 0E       		.uleb128 0xe
+ 1099 0150 00       		.byte	0
+ 1100 0151 00       		.byte	0
+ 1101 0152 00       		.byte	0
+ 1102              		.section	.debug_loc,"",%progbits
+ 1103              	.Ldebug_loc0:
+ 1104              	.LLST0:
+ 1105 0000 24000000 		.4byte	.LVL7
+ 1106 0004 38000000 		.4byte	.LVL10
+ 1107 0008 0200     		.2byte	0x2
+ 1108 000a 30       		.byte	0x30
+ 1109 000b 9F       		.byte	0x9f
+ 1110 000c 38000000 		.4byte	.LVL10
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 24
+
+
+ 1111 0010 44000000 		.4byte	.LVL11
+ 1112 0014 0100     		.2byte	0x1
+ 1113 0016 57       		.byte	0x57
+ 1114 0017 44000000 		.4byte	.LVL11
+ 1115 001b 58000000 		.4byte	.LVL13
+ 1116 001f 0200     		.2byte	0x2
+ 1117 0021 30       		.byte	0x30
+ 1118 0022 9F       		.byte	0x9f
+ 1119 0023 58000000 		.4byte	.LVL13
+ 1120 0027 A8000000 		.4byte	.LVL26
+ 1121 002b 0100     		.2byte	0x1
+ 1122 002d 57       		.byte	0x57
+ 1123 002e AA000000 		.4byte	.LVL27
+ 1124 0032 E4000000 		.4byte	.LFE64
+ 1125 0036 0100     		.2byte	0x1
+ 1126 0038 57       		.byte	0x57
+ 1127 0039 00000000 		.4byte	0
+ 1128 003d 00000000 		.4byte	0
+ 1129              	.LLST1:
+ 1130 0041 30000000 		.4byte	.LVL8
+ 1131 0045 36000000 		.4byte	.LVL9
+ 1132 0049 0200     		.2byte	0x2
+ 1133 004b 30       		.byte	0x30
+ 1134 004c 9F       		.byte	0x9f
+ 1135 004d 36000000 		.4byte	.LVL9
+ 1136 0051 4E000000 		.4byte	.LVL12
+ 1137 0055 0100     		.2byte	0x1
+ 1138 0057 56       		.byte	0x56
+ 1139 0058 4E000000 		.4byte	.LVL12
+ 1140 005c 58000000 		.4byte	.LVL13
+ 1141 0060 0200     		.2byte	0x2
+ 1142 0062 31       		.byte	0x31
+ 1143 0063 9F       		.byte	0x9f
+ 1144 0064 58000000 		.4byte	.LVL13
+ 1145 0068 80000000 		.4byte	.LVL19
+ 1146 006c 0100     		.2byte	0x1
+ 1147 006e 56       		.byte	0x56
+ 1148 006f 80000000 		.4byte	.LVL19
+ 1149 0073 8A000000 		.4byte	.LVL20
+ 1150 0077 0200     		.2byte	0x2
+ 1151 0079 32       		.byte	0x32
+ 1152 007a 9F       		.byte	0x9f
+ 1153 007b 8A000000 		.4byte	.LVL20
+ 1154 007f B4000000 		.4byte	.LVL28
+ 1155 0083 0100     		.2byte	0x1
+ 1156 0085 56       		.byte	0x56
+ 1157 0086 B4000000 		.4byte	.LVL28
+ 1158 008a C4000000 		.4byte	.LVL30
+ 1159 008e 0200     		.2byte	0x2
+ 1160 0090 31       		.byte	0x31
+ 1161 0091 9F       		.byte	0x9f
+ 1162 0092 C4000000 		.4byte	.LVL30
+ 1163 0096 D0000000 		.4byte	.LVL31
+ 1164 009a 0100     		.2byte	0x1
+ 1165 009c 56       		.byte	0x56
+ 1166 009d D0000000 		.4byte	.LVL31
+ 1167 00a1 E4000000 		.4byte	.LFE64
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 25
+
+
+ 1168 00a5 0200     		.2byte	0x2
+ 1169 00a7 30       		.byte	0x30
+ 1170 00a8 9F       		.byte	0x9f
+ 1171 00a9 00000000 		.4byte	0
+ 1172 00ad 00000000 		.4byte	0
+ 1173              	.LLST2:
+ 1174 00b1 58000000 		.4byte	.LVL13
+ 1175 00b5 6A000000 		.4byte	.LVL17
+ 1176 00b9 0100     		.2byte	0x1
+ 1177 00bb 54       		.byte	0x54
+ 1178 00bc 6C000000 		.4byte	.LVL18
+ 1179 00c0 8A000000 		.4byte	.LVL20
+ 1180 00c4 0100     		.2byte	0x1
+ 1181 00c6 54       		.byte	0x54
+ 1182 00c7 00000000 		.4byte	0
+ 1183 00cb 00000000 		.4byte	0
+ 1184              	.LLST3:
+ 1185 00cf 8A000000 		.4byte	.LVL20
+ 1186 00d3 9E000000 		.4byte	.LVL24
+ 1187 00d7 0100     		.2byte	0x1
+ 1188 00d9 54       		.byte	0x54
+ 1189 00da A0000000 		.4byte	.LVL25
+ 1190 00de E4000000 		.4byte	.LFE64
+ 1191 00e2 0100     		.2byte	0x1
+ 1192 00e4 54       		.byte	0x54
+ 1193 00e5 00000000 		.4byte	0
+ 1194 00e9 00000000 		.4byte	0
+ 1195              		.section	.debug_aranges,"",%progbits
+ 1196 0000 2C000000 		.4byte	0x2c
+ 1197 0004 0200     		.2byte	0x2
+ 1198 0006 00000000 		.4byte	.Ldebug_info0
+ 1199 000a 04       		.byte	0x4
+ 1200 000b 00       		.byte	0
+ 1201 000c 0000     		.2byte	0
+ 1202 000e 0000     		.2byte	0
+ 1203 0010 00000000 		.4byte	.LFB65
+ 1204 0014 1C000000 		.4byte	.LFE65-.LFB65
+ 1205 0018 00000000 		.4byte	.LFB66
+ 1206 001c 28000000 		.4byte	.LFE66-.LFB66
+ 1207 0020 00000000 		.4byte	.LFB64
+ 1208 0024 E4000000 		.4byte	.LFE64-.LFB64
+ 1209 0028 00000000 		.4byte	0
+ 1210 002c 00000000 		.4byte	0
+ 1211              		.section	.debug_ranges,"",%progbits
+ 1212              	.Ldebug_ranges0:
+ 1213 0000 58000000 		.4byte	.LBB2
+ 1214 0004 6A000000 		.4byte	.LBE2
+ 1215 0008 6C000000 		.4byte	.LBB3
+ 1216 000c 72000000 		.4byte	.LBE3
+ 1217 0010 00000000 		.4byte	0
+ 1218 0014 00000000 		.4byte	0
+ 1219 0018 8A000000 		.4byte	.LBB4
+ 1220 001c 9E000000 		.4byte	.LBE4
+ 1221 0020 A0000000 		.4byte	.LBB5
+ 1222 0024 A6000000 		.4byte	.LBE5
+ 1223 0028 00000000 		.4byte	0
+ 1224 002c 00000000 		.4byte	0
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 26
+
+
+ 1225 0030 00000000 		.4byte	.LFB65
+ 1226 0034 1C000000 		.4byte	.LFE65
+ 1227 0038 00000000 		.4byte	.LFB66
+ 1228 003c 28000000 		.4byte	.LFE66
+ 1229 0040 00000000 		.4byte	.LFB64
+ 1230 0044 E4000000 		.4byte	.LFE64
+ 1231 0048 00000000 		.4byte	0
+ 1232 004c 00000000 		.4byte	0
+ 1233              		.section	.debug_line,"",%progbits
+ 1234              	.Ldebug_line0:
+ 1235 0000 5A020000 		.section	.debug_str,"MS",%progbits,1
+ 1235      0200B801 
+ 1235      00000201 
+ 1235      FB0E0D00 
+ 1235      01010101 
+ 1236              	.LASF18:
+ 1237 0000 75696E74 		.ascii	"uint8\000"
+ 1237      3800
+ 1238              	.LASF3:
+ 1239 0006 5F5F7569 		.ascii	"__uint8_t\000"
+ 1239      6E74385F 
+ 1239      7400
+ 1240              	.LASF38:
+ 1241 0010 55415254 		.ascii	"UART_LOG_PutChar\000"
+ 1241      5F4C4F47 
+ 1241      5F507574 
+ 1241      43686172 
+ 1241      00
+ 1242              	.LASF6:
+ 1243 0021 5F5F696E 		.ascii	"__int32_t\000"
+ 1243      7433325F 
+ 1243      7400
+ 1244              	.LASF33:
+ 1245 002b 72784461 		.ascii	"rxDataCh\000"
+ 1245      74614368 
+ 1245      00
+ 1246              	.LASF23:
+ 1247 0034 55415254 		.ascii	"UART_TRANSFER_STATE\000"
+ 1247      5F545241 
+ 1247      4E534645 
+ 1247      525F5354 
+ 1247      41544500 
+ 1248              	.LASF32:
+ 1249 0048 6F436852 		.ascii	"oChRx\000"
+ 1249      7800
+ 1250              	.LASF35:
+ 1251 004e 55415254 		.ascii	"UART_LOG_GetChar\000"
+ 1251      5F4C4F47 
+ 1251      5F476574 
+ 1251      43686172 
+ 1251      00
+ 1252              	.LASF30:
+ 1253 005f 746F6767 		.ascii	"toggle\000"
+ 1253      6C6500
+ 1254              	.LASF19:
+ 1255 0066 666C6F61 		.ascii	"float\000"
+ 1255      7400
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 27
+
+
+ 1256              	.LASF42:
+ 1257 006c 57617665 		.ascii	"WaveDAC8_Start\000"
+ 1257      44414338 
+ 1257      5F537461 
+ 1257      727400
+ 1258              	.LASF31:
+ 1259 007b 73436852 		.ascii	"sChRx\000"
+ 1259      7800
+ 1260              	.LASF1:
+ 1261 0081 756E7369 		.ascii	"unsigned char\000"
+ 1261      676E6564 
+ 1261      20636861 
+ 1261      7200
+ 1262              	.LASF46:
+ 1263 008f 474E5520 		.ascii	"GNU C11 5.4.1 20160609 (release) [ARM/embedded-5-br"
+ 1263      43313120 
+ 1263      352E342E 
+ 1263      31203230 
+ 1263      31363036 
+ 1264 00c2 616E6368 		.ascii	"anch revision 237715] -mcpu=cortex-m3 -mthumb -g -O"
+ 1264      20726576 
+ 1264      6973696F 
+ 1264      6E203233 
+ 1264      37373135 
+ 1265 00f5 67202D66 		.ascii	"g -ffunction-sections -ffat-lto-objects\000"
+ 1265      66756E63 
+ 1265      74696F6E 
+ 1265      2D736563 
+ 1265      74696F6E 
+ 1266              	.LASF44:
+ 1267 011d 4144435F 		.ascii	"ADC_StartConvert\000"
+ 1267      53746172 
+ 1267      74436F6E 
+ 1267      76657274 
+ 1267      00
+ 1268              	.LASF45:
+ 1269 012e 5265645F 		.ascii	"Red_LED_Write\000"
+ 1269      4C45445F 
+ 1269      57726974 
+ 1269      6500
+ 1270              	.LASF36:
+ 1271 013c 4144435F 		.ascii	"ADC_IsEndConversion\000"
+ 1271      4973456E 
+ 1271      64436F6E 
+ 1271      76657273 
+ 1271      696F6E00 
+ 1272              	.LASF25:
+ 1273 0150 6973725F 		.ascii	"isr_button_RisingEdge_Interrupt\000"
+ 1273      62757474 
+ 1273      6F6E5F52 
+ 1273      6973696E 
+ 1273      67456467 
+ 1274              	.LASF5:
+ 1275 0170 73686F72 		.ascii	"short unsigned int\000"
+ 1275      7420756E 
+ 1275      7369676E 
+ 1275      65642069 
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 28
+
+
+ 1275      6E7400
+ 1276              	.LASF20:
+ 1277 0183 646F7562 		.ascii	"double\000"
+ 1277      6C6500
+ 1278              	.LASF29:
+ 1279 018a 49544D5F 		.ascii	"ITM_RxBuffer\000"
+ 1279      52784275 
+ 1279      66666572 
+ 1279      00
+ 1280              	.LASF37:
+ 1281 0197 4144435F 		.ascii	"ADC_GetResult32\000"
+ 1281      47657452 
+ 1281      6573756C 
+ 1281      74333200 
+ 1282              	.LASF50:
+ 1283 01a7 6D656D73 		.ascii	"memset\000"
+ 1283      657400
+ 1284              	.LASF4:
+ 1285 01ae 5F5F7569 		.ascii	"__uint16_t\000"
+ 1285      6E743136 
+ 1285      5F7400
+ 1286              	.LASF8:
+ 1287 01b9 6C6F6E67 		.ascii	"long unsigned int\000"
+ 1287      20756E73 
+ 1287      69676E65 
+ 1287      6420696E 
+ 1287      7400
+ 1288              	.LASF2:
+ 1289 01cb 73686F72 		.ascii	"short int\000"
+ 1289      7420696E 
+ 1289      7400
+ 1290              	.LASF26:
+ 1291 01d5 6973725F 		.ascii	"isr_UART\000"
+ 1291      55415254 
+ 1291      00
+ 1292              	.LASF48:
+ 1293 01de 433A5C55 		.ascii	"C:\\Users\\giris\\OneDrive\\Documents\\PSoC Creator"
+ 1293      73657273 
+ 1293      5C676972 
+ 1293      69735C4F 
+ 1293      6E654472 
+ 1294 020c 5C534448 		.ascii	"\\SDHD\\LAB3_SDHD.cydsn\000"
+ 1294      445C4C41 
+ 1294      42335F53 
+ 1294      4448442E 
+ 1294      63796473 
+ 1295              	.LASF34:
+ 1296 0222 50757368 		.ascii	"Push_button_ClearInterrupt\000"
+ 1296      5F627574 
+ 1296      746F6E5F 
+ 1296      436C6561 
+ 1296      72496E74 
+ 1297              	.LASF11:
+ 1298 023d 756E7369 		.ascii	"unsigned int\000"
+ 1298      676E6564 
+ 1298      20696E74 
+ 1298      00
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 29
+
+
+ 1299              	.LASF10:
+ 1300 024a 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 1300      206C6F6E 
+ 1300      6720756E 
+ 1300      7369676E 
+ 1300      65642069 
+ 1301              	.LASF15:
+ 1302 0261 75696E74 		.ascii	"uint8_t\000"
+ 1302      385F7400 
+ 1303              	.LASF43:
+ 1304 0269 4144435F 		.ascii	"ADC_Start\000"
+ 1304      53746172 
+ 1304      7400
+ 1305              	.LASF41:
+ 1306 0273 55415254 		.ascii	"UART_LOG_Start\000"
+ 1306      5F4C4F47 
+ 1306      5F537461 
+ 1306      727400
+ 1307              	.LASF17:
+ 1308 0282 696E7433 		.ascii	"int32_t\000"
+ 1308      325F7400 
+ 1309              	.LASF13:
+ 1310 028a 73697A65 		.ascii	"sizetype\000"
+ 1310      74797065 
+ 1310      00
+ 1311              	.LASF49:
+ 1312 0293 6D61696E 		.ascii	"main\000"
+ 1312      00
+ 1313              	.LASF9:
+ 1314 0298 6C6F6E67 		.ascii	"long long int\000"
+ 1314      206C6F6E 
+ 1314      6720696E 
+ 1314      7400
+ 1315              	.LASF47:
+ 1316 02a6 736F7572 		.ascii	"source\\asw\\main.c\000"
+ 1316      63655C61 
+ 1316      73775C6D 
+ 1316      61696E2E 
+ 1316      6300
+ 1317              	.LASF14:
+ 1318 02b8 63686172 		.ascii	"char\000"
+ 1318      00
+ 1319              	.LASF22:
+ 1320 02bd 53414D50 		.ascii	"SAMPLING_STATE\000"
+ 1320      4C494E47 
+ 1320      5F535441 
+ 1320      544500
+ 1321              	.LASF27:
+ 1322 02cc 636F756E 		.ascii	"count\000"
+ 1322      7400
+ 1323              	.LASF24:
+ 1324 02d2 53544154 		.ascii	"STATE_t\000"
+ 1324      455F7400 
+ 1325              	.LASF16:
+ 1326 02da 75696E74 		.ascii	"uint16_t\000"
+ 1326      31365F74 
+ 1326      00
+ARM GAS  C:\Users\giris\AppData\Local\Temp\cczSilXR.s 			page 30
+
+
+ 1327              	.LASF39:
+ 1328 02e3 6973725F 		.ascii	"isr_button_StartEx\000"
+ 1328      62757474 
+ 1328      6F6E5F53 
+ 1328      74617274 
+ 1328      457800
+ 1329              	.LASF7:
+ 1330 02f6 6C6F6E67 		.ascii	"long int\000"
+ 1330      20696E74 
+ 1330      00
+ 1331              	.LASF12:
+ 1332 02ff 6C6F6E67 		.ascii	"long double\000"
+ 1332      20646F75 
+ 1332      626C6500 
+ 1333              	.LASF28:
+ 1334 030b 4144435F 		.ascii	"ADC_Array\000"
+ 1334      41727261 
+ 1334      7900
+ 1335              	.LASF0:
+ 1336 0315 7369676E 		.ascii	"signed char\000"
+ 1336      65642063 
+ 1336      68617200 
+ 1337              	.LASF40:
+ 1338 0321 6973725F 		.ascii	"isr_UART_StartEx\000"
+ 1338      55415254 
+ 1338      5F537461 
+ 1338      72744578 
+ 1338      00
+ 1339              	.LASF21:
+ 1340 0332 49444C45 		.ascii	"IDLE_STATE\000"
+ 1340      5F535441 
+ 1340      544500
+ 1341              		.ident	"GCC: (GNU Tools for ARM Embedded Processors) 5.4.1 20160609 (release) [ARM/embedded-5-bran

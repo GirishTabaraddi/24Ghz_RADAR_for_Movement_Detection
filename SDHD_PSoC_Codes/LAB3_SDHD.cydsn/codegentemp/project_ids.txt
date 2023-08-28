@@ -1,0 +1,14 @@
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\LEDBlinking.cydsn\LEDBlinking.cyprj|c0c92aac-1401-41bf-b7ab-35eddfbd95e0
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\default\CyAnnotationLibrary\CyAnnotationLibrary.cylib\CyAnnotationLibrary.cyprj|d3fcd383-db22-4ce6-afba-6d1f0d2e445a
+C:\Users\giris\OneDrive\Documents\PSoC Creator\4.4\Downloads ( 4.4).cylib\Downloads ( 4.4).cyprj|ea3f6740-ac6c-4d77-a27c-21a2afc90c57
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cycomponentlibraryupdates\CyComponentLibraryUpdates.cylib\CyComponentLibraryUpdates.cyprj|6821c28e-1faa-4977-bd76-2654d6818308
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cycomponentlibrary\CyComponentLibrary.cylib\CyComponentLibrary.cyprj|515fe8bb-ffde-416d-a301-2f5262c077eb
+C:\Program Files (x86)\Cypress\PSoC Creator\4.4\PSoC Creator\psoc\content\cyprimitives\CyPrimitives.cylib\CyPrimitives.cyprj|ae6d48ce-6115-40c7-b728-282cdae407f7
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\Button.cydsn\Button.cyprj|3603b1d1-acc4-4ea8-a327-74bc4eb586c0
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\3bitCounter.cydsn\3bitCounter.cyprj|32b1ab56-70c6-4d9d-bd19-0c6c8e2e7500
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\LAB3_SDHD.cydsn\LAB3_SDHD.cyprj|35aac2f7-e103-4da3-a5b6-2e80e56be358
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\UART_Exercise_1.cydsn\UART_Exercise_1.cyprj|54317ac9-43a2-48ff-9662-03a28c0febf5
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\UART_Exercise_2.cydsn\UART_Exercise_2.cyprj|91845aed-c316-4abf-8628-85c3df444b3e
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\UART_Exercise_3.cydsn\UART_Exercise_3.cyprj|a61d5bca-4e3b-4ebb-bf51-4c4c292adfd3
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\MotionDetector.cydsn\MotionDetector.cyprj|7da2294e-86f0-472f-813e-b1230c89307c
+C:\Users\giris\OneDrive\Documents\PSoC Creator\SDHD\SDHD_Lab3.cydsn\SDHD_Lab3.cyprj|9d063826-55c6-46d5-a588-99cad4d076ed
