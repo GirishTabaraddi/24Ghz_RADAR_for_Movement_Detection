@@ -1,0 +1,116 @@
+% CA CFAR Algorhytmus
+clear all;
+close all;
+clc;
+
+% CA CFAR Parameters
+N  = 512;   %Sample Size
+NG = 1;     %Guard Cells
+NR = 10;    %Reference Cells
+PFA = 10^-6; %Probability of False Alarm
+
+
+%%%
+% Test Data Generation
+%%%
+
+% sine Parameters
+A0 = 1;
+fs = 256;
+ks1 = 20.0;
+phase1 = -pi/4;
+
+f1 = fs/N*ks1;
+
+% abgetatstet und "kontinuierlich"
+n = 0:(N-1);
+x = A0*cos(2*pi*f1/fs*n + phase1); %- 0.5*sin(2*pi*f2/fs*n + phase2);
+
+% noise
+A0eff = A0/sqrt(2);
+sinePower = A0eff^2;
+noise = A0eff*randn(N,1);
+
+% signal and noise
+xnoise = x+noise';
+xnoiseeff = xnoise/sqrt(2);
+power = xnoiseeff.^2;
+
+% Plot sinus mit noise
+figure(1)
+plot(n,xnoise,'b');
+hold on
+plot(n,x,'r','LineWidth',1.5);
+xlabel 'n'
+ylabel 'x_{noise}(n)'
+title('sampled sinewave with AWGN');
+legend('sine and noise','sine')
+
+
+% Spectral computation
+
+figure(2) %plot the spectra
+dft=fft(xnoise);
+plot(0:511,abs(dft));
+
+
+%%%
+% CFAR
+%%%
+
+% Implement here your CA-CFAR Algorithmn
+% cfar.ThresholdFactor = 'Auto';
+% cfar.ProbabilityFalseAlarm = PFA;
+%release(cfar);
+% cfar.ThresholdOutputPort = true;
+% cfar.ThresholdFactor = 'Auto';
+% %cfar.NumTrainingCells = 200;
+% rsamp = randn(dft,511,1)+1i*randn(dft,511,1);
+% ramp = linspace(1,10,512)';
+% xRamp = abs(sqrt(power*ramp./2).*rsamp).^2;
+% [x_detected,th] = cfar(xRamp,1:length(xRamp));
+% figure(3) %Plot the resulting threshold in the spectra plot
+% plot(1:length(xRamp),xRamp,1:length(xRamp),th,find(x_detected),xRamp(x_detected),'o')
+% legend('Signal','Threshold','Detections','Location','Northwest')
+% xlabel('Time Index')
+% ylabel('Level')
+% 
+% 
+% % give back the number of targets
+
+
+% CFAR Detection
+detection = zeros(1, N);
+
+for i = NG + NR + 1 : N - (NG + NR)
+    referenceWindow = xnoise(i - NR - NG : i + NR + NG);
+    guardWindow = xnoise(i - NG : i + NG);
+    Navg = 1 + sum(referenceWindow) + sum(guardWindow);
+   
+    SD=(1/Navg)*sum(xnoise);
+    alpha=Navg*(PFA^(-1/Navg)-1);
+    threshold  = alpha*SD;  
+
+    if xnoise(i) > threshold
+        detection(i) = 1;
+        %disp('Detection:', detection(i));
+    end
+end
+
+% Plotting
+figure (3);
+%subplot(2,1,1);
+plot(n, dft, 'b');
+hold on;
+plot(n, detection, 'r', 'LineWidth', 1.5);
+xlabel('Sample');
+ylabel('Amplitude');
+title('CFAR Detection');
+legend('Signal with Noise', 'Detection');
+
+% subplot(2,1,2);
+% plot(n, x, 'g');
+% xlabel('Sample');
+% ylabel('Amplitude');
+% title('Sine Wave');
+
